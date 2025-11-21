@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Resort {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  city              String
+  stateProvince     String
+  country           String   @default("United States")
+  latitude          Float
+  longitude         Float
+  baseElevation     Int
+  summitElevation   Int
+  verticalDrop      Int
+  totalRuns         Int
+  beginnerRuns      Int      @default(0)
+  intermediateRuns  Int      @default(0)
+  advancedRuns      Int      @default(0)
+  expertRuns        Int      @default(0)
+  totalLifts        Int
+  liftCapacity      Int?
+  liftTypes         String?  // JSON array
+  adultTicketPrice  Float?
+  childTicketPrice  Float?
+  seasonPassPrice   Float?
+  averageSnowfall   Int?     // inches per year
+  snowmaking        Boolean  @default(false)
+  snowmakingAcres   Int?
+  totalAcres        Int?
+  skiableAcres      Int?
+  terrainTypes      String?  // JSON array
+  amenities         String?  // JSON array (lodging, dining, parking, lessons, rentals, snowcat, night skiing, etc.)
+  website           String?
+  phone             String?
+  address           String?
+  images            String?  // JSON array of image URLs
+  description       String?  @default("")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([stateProvince])
+  @@index([country])
+  @@index([latitude, longitude])
+}
