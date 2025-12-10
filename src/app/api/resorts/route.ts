@@ -4,6 +4,9 @@ import type { ResortFilters } from '@/types/resort'
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('API: Fetching resorts...')
+    console.log('DATABASE_URL:', process.env.DATABASE_URL)
+    
     const searchParams = request.nextUrl.searchParams
     const filters: ResortFilters = {
       search: searchParams.get('search') || undefined,
@@ -115,6 +118,7 @@ export async function GET(request: NextRequest) {
     const skip = ((filters.page || 1) - 1) * (filters.limit || 50)
     const take = filters.limit || 50
 
+    console.log('API: Querying database with filters:', where)
     const [resorts, total] = await Promise.all([
       db.resort.findMany({
         where,
@@ -124,6 +128,8 @@ export async function GET(request: NextRequest) {
       }),
       db.resort.count({ where }),
     ])
+
+    console.log(`API: Found ${resorts.length} resorts (total: ${total})`)
 
     // Parse JSON fields
     const parsedResorts = resorts.map((resort) => ({
@@ -143,7 +149,25 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching resorts:', error)
-    return NextResponse.json({ error: 'Failed to fetch resorts' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    // Log full error details
+    console.error('Full error:', {
+      message: errorMessage,
+      stack: errorStack,
+      error: error
+    })
+    
+    return NextResponse.json({ 
+      error: 'Failed to fetch resorts',
+      details: errorMessage,
+      resorts: [],
+      total: 0,
+      page: 1,
+      limit: 50,
+      totalPages: 0
+    }, { status: 500 })
   }
 }
 

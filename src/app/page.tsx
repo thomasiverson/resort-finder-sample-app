@@ -38,12 +38,21 @@ export default function Home() {
   // Fetch unique states for filter dropdown
   useEffect(() => {
     fetch('/api/resorts?limit=1000')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
       .then((data) => {
         const uniqueStates = Array.from(
-          new Set(data.resorts.map((r: Resort) => r.stateProvince))
+          new Set((data.resorts || []).map((r: Resort) => r.stateProvince))
         ).sort() as string[]
         setStates(uniqueStates)
+      })
+      .catch((error) => {
+        console.error('Error fetching states:', error)
+        setStates([])
       })
   }, [])
 
@@ -76,13 +85,23 @@ export default function Home() {
     params.append('limit', '100')
 
     fetch(`/api/resorts?${params.toString()}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          return res.json().then(err => {
+            console.error('API Error:', err)
+            throw new Error(err.error || `HTTP error! status: ${res.status}`)
+          })
+        }
+        return res.json()
+      })
       .then((data) => {
-        setResorts(data.resorts)
+        console.log('Fetched resorts:', data.resorts?.length || 0, 'total:', data.total)
+        setResorts(data.resorts || [])
         setLoading(false)
       })
       .catch((error) => {
         console.error('Error fetching resorts:', error)
+        setResorts([])
         setLoading(false)
       })
   }, [filters, sortBy, sortOrder])
